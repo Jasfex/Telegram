@@ -408,6 +408,7 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 	private HintView2 savedMessagesSearchHint;
     private HintView2 savedMessagesTagHint;
     private HintView2 groupEmojiPackHint;
+    private HintView2 botButtonHint;
     private HintView2 botMessageHint;
     private HintView2 factCheckHint;
 
@@ -7955,6 +7956,18 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
         bottomOverlayStartButton.setVisibility(View.GONE);
         bottomOverlayStartButton.setOnClickListener(v -> bottomOverlayChatText.callOnClick());
         bottomOverlayChat.addView(bottomOverlayStartButton, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER, 8, 8, 8, 8));
+
+        botButtonHint = new HintView2(getContext(), HintView2.DIRECTION_BOTTOM)
+                .setIcon(ContextCompat.getDrawable(contentView.getContext(), R.drawable.arrow_double_down))
+                .setIconTranslate(dp(4), dp(2))
+                .setTextAlign(Layout.Alignment.ALIGN_NORMAL)
+                .setDuration(-1)
+                .setHideByTouch(true)
+                .useScale(true)
+                .setRounding(8);
+        botButtonHint.setText(LocaleController.getString(R.string.BotHint));
+        botButtonHint.setMaxWidthPx(HintView2.cutInFancyHalf(botButtonHint.getText(), botButtonHint.getTextPaint()));
+        contentView.addView(botButtonHint, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 120, Gravity.TOP | Gravity.FILL_HORIZONTAL, 16, 0, 16, 0));
 
         if (currentUser != null && currentUser.bot && currentUser.id != UserObject.VERIFY && !UserObject.isDeleted(currentUser) && !UserObject.isReplyUser(currentUser) && !isInScheduleMode() && chatMode != MODE_PINNED && chatMode != MODE_SAVED && !isReport()) {
             bottomOverlayStartButton.setVisibility(View.VISIBLE);
@@ -25179,6 +25192,10 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
                 if (bottomOverlayStartButton != null) {
                     bottomOverlayStartButton.setVisibility(View.GONE);
                 }
+                if (botButtonHint != null) {
+                    botButtonHint.hide();
+                    botButtonHint = null;
+                }
                 if (currentUser.bot) {
                     bottomOverlayChatText.setText(LocaleController.getString(R.string.BotUnblock));
                 } else {
@@ -25206,6 +25223,14 @@ public class ChatActivity extends BaseFragment implements NotificationCenter.Not
 //                bottomOverlayStartButton.setText(LocaleController.getString(R.string.BotStart));
                 if (bottomOverlayStartButton != null) {
                     bottomOverlayStartButton.setVisibility(View.VISIBLE);
+                    if (botButtonHint != null) {
+                        contentView.post(() -> {
+                            int[] loc = new int[2];
+                            bottomOverlayChat.getLocationInWindow(loc);
+                            botButtonHint.setTranslationY(loc[1] - botButtonHint.getTop()  - botButtonHint.getHeight() - dp(8));
+                            botButtonHint.show();
+                        });
+                    }
                 }
                 bottomOverlayChatText.setVisibility(View.GONE);
                 chatActivityEnterView.hidePopup(false);

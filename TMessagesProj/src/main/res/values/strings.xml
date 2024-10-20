@@ -3444,10 +3444,11 @@
     <string name="BotShare">Share</string>
     <string name="BotSettings">Settings</string>
     <string name="BotHelp">Help</string>
+    <string name="BotHint">Tap here to use this bot</string>
     <string name="BotStatusRead">has access to messages</string>
     <string name="BotStatusCantRead">has no access to messages</string>
     <string name="BotInfoTitle">What can this bot do?</string>
-    <string name="BotStart">START</string>
+    <string name="BotStart">Bot Start</string>
     <string name="BotUnblock">RESTART</string>
     <string name="BotRestart">Restart bot</string>
     <string name="BotAddToMenu">Add to Menu</string>
