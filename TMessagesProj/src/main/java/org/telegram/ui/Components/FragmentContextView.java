@@ -154,6 +154,7 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
     private int gradientWidth;
     private TextPaint gradientTextPaint;
     private StaticLayout timeLayout;
+    private final boolean[] showNotifyMe = new boolean[1];
     private RectF rect = new RectF();
     private boolean scheduleRunnableScheduled;
     private final Runnable updateScheduleTimeRunnable = new Runnable() {
@@ -169,13 +170,19 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                 scheduleRunnableScheduled = false;
                 return;
             }
-            int currentTime = fragment.getConnectionsManager().getCurrentTime();
-            int diff = call.call.schedule_date - currentTime;
+            showNotifyMe[0] = !call.call.schedule_start_subscribed &&
+                    chatActivity.getCurrentChat() != null && !ChatObject.canManageCalls(chatActivity.getCurrentChat());
             String str;
-            if (diff >= 24 * 60 * 60) {
-                str = LocaleController.formatPluralString("Days", Math.round(diff / (24 * 60 * 60.0f)));
+            if (showNotifyMe[0]) {
+                str = LocaleController.getString(R.string.VoipChatNotifyMe);
             } else {
-                str = AndroidUtilities.formatFullDuration(call.call.schedule_date - currentTime);
+                int currentTime = fragment.getConnectionsManager().getCurrentTime();
+                int diff = call.call.schedule_date - currentTime;
+                if (diff >= 24 * 60 * 60) {
+                    str = LocaleController.formatPluralString("Days", Math.round(diff / (24 * 60 * 60.0f)));
+                } else {
+                    str = AndroidUtilities.formatFullDuration(call.call.schedule_date - currentTime);
+                }
             }
             int width = (int) Math.ceil(gradientTextPaint.measureText(str));
             timeLayout = new StaticLayout(str, gradientTextPaint, width, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
@@ -284,6 +291,8 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
         }
         frameLayout = new BlurredFrameLayout(context, sizeNotifierFrameLayout) {
 
+            private final RectF timeLayoutBounds = new RectF();
+
             @Override
             public void invalidate() {
                 super.invalidate();
@@ -324,10 +333,47 @@ public class FragmentContextView extends FrameLayout implements NotificationCent
                     canvas.save();
                     canvas.translate(x, y);
                     canvas.drawRoundRect(rect, AndroidUtilities.dp(16), AndroidUtilities.dp(16), gradientPaint);
+                    timeLayoutBounds.set(x, y, x + rect.right, y + rect.bottom);
                     canvas.translate(AndroidUtilities.dp(12), AndroidUtilities.dp(6));
                     timeLayout.draw(canvas);
                     canvas.restore();
                 }
+            }
+
+            @Override
+            public boolean onTouchEvent(MotionEvent event) {
+                if (showNotifyMe[0] && currentStyle == STYLE_INACTIVE_GROUP_CALL) {
+                    float touchRadius = AndroidUtilities.dp(6f);
+                    float left = event.getX() - touchRadius;
+                    float top = event.getY() - touchRadius;
+                    float right = event.getX() + touchRadius;
+                    float bottom = event.getY() + touchRadius;
+                    if (timeLayoutBounds.intersects(left, top, right, bottom)) {
+                        ChatObject.Call call = chatActivity.getGroupCall();
+                        boolean interceptTouch = call != null && call.call != null && !call.call.schedule_start_subscribed;
+                        if (interceptTouch && event.getAction() == MotionEvent.ACTION_UP) {
+                            TLRPC.TL_phone_toggleGroupCallStartSubscription req = new TLRPC.TL_phone_toggleGroupCallStartSubscription();
+                            req.call = call.getInputGroupCall();
+                            call.call.schedule_start_subscribed = true;
+                            req.subscribed = true;
+                            AccountInstance accountInstance = fragment.getAccountInstance();
+                            if (accountInstance != null) {
+                                accountInstance.getConnectionsManager().sendRequest(req, (response, error) -> {
+                                    if (response != null) {
+                                        accountInstance.getMessagesController().processUpdates((TLRPC.Updates) response, false);
+                                    }
+                                });
+                                String str = LocaleController.getString(R.string.VoipChatSubscriptionAlertText);
+                                BulletinFactory.of(fragment)
+                                    .createSimpleBulletin(getContext().getResources().getDrawable(R.drawable.notifications_filled), str)
+                                    .show();
+                            }
+                        }
+                        return interceptTouch;
+                    }
+                    return false;
+                }
+                return super.onTouchEvent(event);
             }
         };
         addView(frameLayout, LayoutHelper.createFrame(LayoutHelper.MATCH_PARENT, 36, Gravity.TOP | Gravity.LEFT, 0, 0, 0, 0));

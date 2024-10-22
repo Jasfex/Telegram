@@ -4182,6 +4182,7 @@
     <string name="VoipChannelScheduleInfo">Subscribers of the channel will be notified that the live stream will start in %1$s.</string>
     <string name="VoipChatStartsIn">Starts in</string>
     <string name="VoipChatLateBy">Late by</string>
+    <string name="VoipChatNotifyMe">Notify Me</string>
     <string name="VoipChatShare">Share</string>
     <string name="VoipChatReminderHint">We will notify you when it starts.</string>
     <string name="VoipChatUserJoined">**%1$s** joined the voice chat.</string>
@@ -4192,6 +4193,7 @@
     <string name="VoipChatRecentCalls">Recent calls</string>
     <string name="VoipChatStartScreenCapture">Share screen</string>
     <string name="VoipChatStopScreenCapture">Stop screen sharing</string>
+    <string name="VoipChatSubscriptionAlertText">You will be notified when the live stream starts.</string>
     <string name="ThisIsYou">this is you</string>
     <string name="VoipGroupOpenChat">Open Chat</string>
     <string name="VoipAddPhoto">Add Photo</string>
