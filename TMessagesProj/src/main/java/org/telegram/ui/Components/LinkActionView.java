@@ -59,6 +59,7 @@ public class LinkActionView extends LinearLayout {
     String link;
     BaseFragment fragment;
     ImageView optionsView;
+    private final boolean[] useQrCodeInsteadOfOptions = new boolean[1];
     private final TextView copyView;
     private final TextView shareView;
     private final TextView removeView;
@@ -96,9 +97,8 @@ public class LinkActionView extends LinearLayout {
         int containerPadding = 4;
         frameLayout.addView(linkView);
         optionsView = new ImageView(context);
-        optionsView.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_ab_other));
-        optionsView.setContentDescription(LocaleController.getString(R.string.AccDescrMoreOptions));
         optionsView.setScaleType(ImageView.ScaleType.CENTER);
+        updateOptionsView();
         frameLayout.addView(optionsView, LayoutHelper.createFrame(40, 48, Gravity.RIGHT | Gravity.CENTER_VERTICAL));
         addView(frameLayout, LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT, 0, containerPadding, 0, containerPadding, 0));
 
@@ -219,6 +219,10 @@ public class LinkActionView extends LinearLayout {
         });
 
         optionsView.setOnClickListener(view -> {
+            if (useQrCodeInsteadOfOptions[0]) {
+                showQrCode();
+                return;
+            }
             if (actionBarPopupWindow != null) {
                 return;
             }
@@ -456,7 +460,7 @@ public class LinkActionView extends LinearLayout {
         if (hideRevokeOption != b) {
             hideRevokeOption = b;
             optionsView.setVisibility(View.VISIBLE);
-            optionsView.setImageDrawable(ContextCompat.getDrawable(optionsView.getContext(), R.drawable.ic_ab_other));
+            updateOptionsView();
         }
     }
 
@@ -612,9 +616,24 @@ public class LinkActionView extends LinearLayout {
 
     public void setPermanent(boolean permanent) {
         this.permanent = permanent;
+        updateOptionsView();
     }
 
     public void setCanEdit(boolean canEdit) {
         this.canEdit = canEdit;
+        updateOptionsView();
+    }
+
+    private void updateOptionsView() {
+        boolean showEditOption = !this.permanent && canEdit;
+        boolean showRevokeLinkOption = !hideRevokeOption;
+        useQrCodeInsteadOfOptions[0] = !showEditOption && !showRevokeLinkOption;
+        if (useQrCodeInsteadOfOptions[0]) {
+            optionsView.setImageDrawable(ContextCompat.getDrawable(optionsView.getContext(), R.drawable.msg_qrcode));
+            optionsView.setContentDescription(LocaleController.getString(R.string.GetQRCode));
+        } else {
+            optionsView.setImageDrawable(ContextCompat.getDrawable(optionsView.getContext(), R.drawable.ic_ab_other));
+            optionsView.setContentDescription(LocaleController.getString(R.string.AccDescrMoreOptions));
+        }
     }
 }
